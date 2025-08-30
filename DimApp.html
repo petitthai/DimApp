@@ -47,8 +47,9 @@
 
   <script>
     let gekozenINSZ = null;
+    let employees = [];
 
-    // CSV to array
+    // Convert CSV text to array of objects
     function csvToArray(str) {
       return str.trim().split("\n").slice(1).map(line => { // skip header
         const [voornaam, familienaam, insz] = line.split(",");
@@ -56,14 +57,14 @@
       });
     }
 
-    // Fetch employees from public CSV
+    // Fetch employees from your public CSV
     fetch('https://docs.google.com/spreadsheets/d/e/2PACX-1vRJbpHVppuTI8jaWb-kYI_THslQpw_j9LUlzAsXC7-rA6Cur8uV9M524hDVsMYr7T-zjVk0GcQVe8nP/pub?gid=0&single=true&output=csv')
       .then(response => response.text())
       .then(text => {
-        const data = csvToArray(text);
+        employees = csvToArray(text);
         const div = document.getElementById("werknemers");
 
-        data.forEach(w => {
+        employees.forEach(w => {
           let tile = document.createElement("div");
           tile.className = "tile";
           tile.innerText = w.voornaam + " " + w.familienaam;
@@ -81,12 +82,17 @@
         document.getElementById("resultaat").innerText = "Error loading employees: " + err;
       });
 
-    // Function to register (still calls Apps Script for now)
+    // Register function showing confirmation
     function registreer(maaltijd) {
-      google.script.run.withSuccessHandler(function(msg) {
-        document.getElementById("resultaat").innerText = msg;
-      }).registreerDimona(gekozenINSZ, maaltijd);
+      if (!gekozenINSZ) return;
+
+      const employee = employees.find(w => w.insz === gekozenINSZ);
+      if (!employee) return;
+
+      document.getElementById("resultaat").innerText =
+        `${employee.voornaam} ${employee.familienaam} is geregistreerd voor ${maaltijd}!`;
     }
   </script>
 </body>
 </html>
+
