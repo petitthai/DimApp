@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>DimApp</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    h2 { color: #333; }
+    .tile {
+      display: inline-block;
+      margin: 10px;
+      padding: 20px;
+      border: 1px solid #ccc;
+      border-radius: 12px;
+      cursor: pointer;
+      text-align: center;
+      background: #f5f5f5;
+      box-shadow: 2px 2px 6px rgba(0,0,0,0.1);
+      min-width: 120px;
+    }
+    .tile:hover { background: #e0f0ff; }
+    button {
+      margin: 5px;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      background: #007BFF;
+      color: white;
+      font-size: 14px;
+    }
+    button:hover { background: #0056b3; }
+    #resultaat { margin-top: 20px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h2>Selecteer werknemer</h2>
+  <div id="werknemers"></div>
+
+  <div id="maaltijd" style="display:none;">
+    <h2>Selecteer maaltijd</h2>
+    <button onclick="registreer('Lunch')">Lunch</button>
+    <button onclick="registreer('Dinner')">Dinner</button>
+  </div>
+
+  <p id="resultaat"></p>
+
+  <script>
+    let gekozenINSZ = null;
+
+    // CSV to array
+    function csvToArray(str) {
+      return str.trim().split("\n").slice(1).map(line => { // skip header
+        const [voornaam, familienaam, insz] = line.split(",");
+        return {voornaam, familienaam, insz};
+      });
+    }
+
+    // Fetch employees from public CSV
+    fetch('https://docs.google.com/spreadsheets/d/e/2PACX-1vRJbpHVppuTI8jaWb-kYI_THslQpw_j9LUlzAsXC7-rA6Cur8uV9M524hDVsMYr7T-zjVk0GcQVe8nP/pub?gid=0&single=true&output=csv')
+      .then(response => response.text())
+      .then(text => {
+        const data = csvToArray(text);
+        const div = document.getElementById("werknemers");
+
+        data.forEach(w => {
+          let tile = document.createElement("div");
+          tile.className = "tile";
+          tile.innerText = w.voornaam + " " + w.familienaam;
+
+          tile.addEventListener("click", function() {
+            gekozenINSZ = w.insz;
+            document.getElementById("maaltijd").style.display = "block";
+            document.getElementById("resultaat").innerText = "";
+          });
+
+          div.appendChild(tile);
+        });
+      })
+      .catch(err => {
+        document.getElementById("resultaat").innerText = "Error loading employees: " + err;
+      });
+
+    // Function to register (still calls Apps Script for now)
+    function registreer(maaltijd) {
+      google.script.run.withSuccessHandler(function(msg) {
+        document.getElementById("resultaat").innerText = msg;
+      }).registreerDimona(gekozenINSZ, maaltijd);
+    }
+  </script>
+</body>
+</html>
